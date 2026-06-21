@@ -66,9 +66,33 @@ def call_llm(api_key, model_id, system_prompt, user_prompt, is_json=False, max_t
 # --- 初始化 Session State ---
 if "assignments" not in st.session_state:
     st.session_state.assignments = []
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
 
 # --- 页面配置 ---
 st.set_page_config(page_title="真实问题表格自动生成器", layout="wide", page_icon="📝")
+
+# --- 邀请码验证门 ---
+# 邀请码优先从 Secrets 读取；如果本地没有配置 Secrets，则使用硬编码的备用值（仅供本地开发用）
+CORRECT_CODE = st.secrets.get("INVITE_CODE", "kant ist gut")
+
+if not st.session_state.authenticated:
+    st.markdown("""
+    <style>
+    .block-container { max-width: 480px !important; padding-top: 8rem !important; }
+    </style>
+    """, unsafe_allow_html=True)
+    st.title("🔐 真实问题表格生成器")
+    st.markdown("此工具仅限受邀用户使用。请输入邀请码以继续。")
+    invite_input = st.text_input("邀请码", type="password", placeholder="请输入邀请码...")
+    if st.button("进入", use_container_width=True, type="primary"):
+        if invite_input.strip() == CORRECT_CODE:
+            st.session_state.authenticated = True
+            st.rerun()
+        else:
+            st.error("邀请码错误，请重试。")
+    st.stop()
+
 st.title("📝 真实问题表格自动生成器")
 
 # --- 侧边栏 ---
